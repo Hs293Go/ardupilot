@@ -27,6 +27,8 @@ class AC_LQR
     void Q1(const float v) { _q1.set(v); }
     void R(const float v) { _r.set(v); }
 
+    bool covarianceStep();
+
 private:
 #if MATH_CHECK_INDEXES
     typedef VectorN<ftype, 2> Vector2;
@@ -40,7 +42,7 @@ private:
     typedef ftype Matrix3[3][3];
 #endif
 protected:
-    void _initialize_matrices(float beta, float tau, float dT);
+    void _getStateInput(float beta, float tau, float dT);
 
     // parameters
     AP_Float _q0;
