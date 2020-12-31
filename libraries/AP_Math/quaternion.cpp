@@ -620,6 +620,31 @@ Quaternion Quaternion::operator*(const Quaternion &v) const
     return ret;
 }
 
+// Overloaded * operator to transform a Vector3f similar to that implemented
+// by Eigen::Quaternion and glm::quat.
+// 21 multiplications and 18 addition / subtractions
+Vector3f Quaternion::operator*(const Vector3f &v) const
+{
+    Vector3f ret;
+    const float q1q2 =  q1 * q2;
+    const float q1q3 =  q1 * q3;
+    const float q1q4 =  q1 * q4;
+    const float q2q2 = -q2 * q2;
+    const float q2q3 =  q2 * q3;
+    const float q2q4 =  q2 * q4;
+    const float q3q3 = -q3 * q3;
+    const float q3q4 =  q3 * q4;
+    const float q4q4 = -q4 * q4;
+
+    ret.x = 2.0f*((q3q3 + q4q4)*v.x + (q2q3 - q1q4)*v.y + (q1q3 + q2q4)*v.z);
+    ret.y = 2.0f*((q1q4 + q2q3)*v.x + (q2q2 + q4q4)*v.y + (q3q4 - q1q2)*v.z);
+    ret.z = 2.0f*((q2q4 - q1q3)*v.x + (q1q2 + q3q4)*v.y + (q2q2 + q3q3)*v.z);
+
+    ret += v;
+
+    return ret;
+}
+
 Quaternion &Quaternion::operator*=(const Quaternion &v)
 {
     const float w1 = q1;
