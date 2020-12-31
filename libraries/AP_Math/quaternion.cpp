@@ -690,3 +690,37 @@ Quaternion Quaternion::angular_difference(const Quaternion &v) const
 {
     return v.inverse() * *this;
 }
+
+// Compute the quaternion representing the least rotation sending the line
+// aligned to vector 'from' to the line aligned to vector 'to', both lines
+// passing through the origin
+float Quaternion::set_from_two_vectors(const Vector3f &from, const Vector3f &to)
+{
+    const Vector3f v0 = from.normalized();
+    const Vector3f v1 = to.normalized();
+
+    // the dot product yields cosine of the angle between v0 and v1
+    const float c = constrain_float(v1 * v0, -1.0f, 1.0f);
+
+    // if dot == -1, vectors are nearly opposite and the cross product
+    // between them tends to 0. Pick the [0, 0, 1] rotation axis and return
+    if (is_equal(c, -1.0f)) {
+        q1 = 0.0f;
+        q2 = 0.0f;
+        q3 = 0.0f;
+        q4 = 1.0f;
+        return M_PI;
+    }
+
+    // the cross product of v0 and v1 yields the desired rotation axis
+    // multiplied by the sine of the angle between v0 and v1
+    const Vector3f sin_axis = v0 % v1;
+    const float s = sqrtf((1.0f + c)*2.0f);
+    const float invs = 1.0f/s;
+    q1 = 0.5f*s;
+    q2 = invs*sin_axis.x;
+    q3 = invs*sin_axis.y;
+    q4 = invs*sin_axis.z;
+    
+    return acosf(c); 
+}

@@ -170,4 +170,6 @@ public:
 
     // angular difference between quaternions
     Quaternion angular_difference(const Quaternion &v) const;
+
+    float set_from_two_vectors(const Vector3f &from, const Vector3f &to);
 };
