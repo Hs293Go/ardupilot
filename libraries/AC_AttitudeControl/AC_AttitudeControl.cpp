@@ -594,33 +594,19 @@ void AC_AttitudeControl::attitude_controller_run_quat()
 // The first rotation corrects the thrust vector and the second rotation corrects the heading vector.
 void AC_AttitudeControl::thrust_heading_rotation_angles(Quaternion& att_to_quat, const Quaternion& att_from_quat, Vector3f& att_diff_angle, float& thrust_vec_dot)
 {
-    Matrix3f att_to_rot_matrix; // rotation from the target body frame to the inertial frame.
-    att_to_quat.rotation_matrix(att_to_rot_matrix);
-    Vector3f att_to_thrust_vec = att_to_rot_matrix * Vector3f(0.0f, 0.0f, 1.0f);
+    // The thrust vector is always directed along [0,0,1] in body frames
+    const Vector3f thrust_vec = {0.0f, 0.0f, 1.0f};
 
-    Matrix3f att_from_rot_matrix; // rotation from the current body frame to the inertial frame.
-    att_from_quat.rotation_matrix(att_from_rot_matrix);
-    Vector3f att_from_thrust_vec = att_from_rot_matrix * Vector3f(0.0f, 0.0f, 1.0f);
+    // Rotate the thrust vector of the current body frame into the inertial frame.
+    const Vector3f att_to_thrust_vec = att_to_quat * thrust_vec;
 
+    // Rotate the thrust vector of the target body frame into the inertial frame.
+    const Vector3f att_from_thrust_vec = att_from_quat * thrust_vec;
+    
     // the dot product is used to calculate the current lean angle for use of external functions
-    _thrust_angle = acosf(constrain_float(Vector3f(0.0f,0.0f,1.0f) * att_from_thrust_vec,-1.0f,1.0f));
-
-    // the cross product of the desired and target thrust vector defines the rotation vector
-    Vector3f thrust_vec_cross = att_from_thrust_vec % att_to_thrust_vec;
-
-    // the dot product is used to calculate the angle between the target and desired thrust vectors
-    thrust_vec_dot = acosf(constrain_float(att_from_thrust_vec * att_to_thrust_vec, -1.0f, 1.0f));
-
-    // Normalize the thrust rotation vector
-    float thrust_vector_length = thrust_vec_cross.length();
-    if (is_zero(thrust_vector_length) || is_zero(thrust_vec_dot)) {
-        thrust_vec_cross = Vector3f(0, 0, 1);
-        thrust_vec_dot = 0.0f;
-    } else {
-        thrust_vec_cross /= thrust_vector_length;
-    }
+    _thrust_angle = acosf(constrain_float(thrust_vec * att_from_thrust_vec,-1.0f,1.0f));
     Quaternion thrust_vec_correction_quat;
-    thrust_vec_correction_quat.from_axis_angle(thrust_vec_cross, thrust_vec_dot);
+    thrust_vec_dot = thrust_vec_correction_quat.set_from_two_vectors(att_from_thrust_vec, att_to_thrust_vec);
 
     // Rotate thrust_vec_correction_quat to the att_from frame
     thrust_vec_correction_quat = att_from_quat.inverse() * thrust_vec_correction_quat * att_from_quat;
